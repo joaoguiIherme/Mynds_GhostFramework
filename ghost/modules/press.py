@@ -21,7 +21,12 @@ class ExternalCommand(Command):
         })
 
     def run(self, args):
-        if int(args[1]) < 124:
-            self.device.send_command(f"input keyevent {args[1]}")
-        else:
+        """ Send a key event to the device by numeric keycode (0-123). """
+
+        max_keycode = 124
+
+        if not args[1].isdigit() or int(args[1]) >= max_keycode:
             self.print_error("Invalid keycode!")
+            return
+
+        self.device.send_command(f"input keyevent {int(args[1])}")

@@ -21,6 +21,8 @@ class ExternalCommand(Command):
         })
 
     def run(self, args):
+        """ Enable or disable the device Wi-Fi service. """
+
         if args[1] in ['on', 'off']:
             if args[1] == 'on':
                 self.device.send_command("svc wifi enable")

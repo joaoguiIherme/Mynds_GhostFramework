@@ -22,8 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Any, Dict
+
 from badges.cmd import Cmd
 
+from ghost import __version__
 from ghost.core.device import Device
 
 
@@ -44,12 +47,13 @@ class Console(Cmd):
   : :; :: .. :' .; :`._-.': :
   `.__.':_;:_;`.__.'`.__.':_;
 
---=[ %bold%whiteGhost Framework 8.0.0%end
+--=[ %bold%whiteGhost Framework """ + __version__ + """%end
 --=[ Developed by EntySec (%linehttps://entysec.com/%end)
 """
         )
 
-        self.devices = {}
+        self.devices: Dict[int, Dict[str, Any]] = {}
+        self._next_id = 0
 
     def do_exit(self, _) -> None:
         """ Exit Ghost Framework.
@@ -80,13 +84,20 @@ class Console(Cmd):
         if len(address) < 2:
             host, port = address[0], 5555
         else:
-            host, port = address[0], int(address[1])
+            try:
+                host, port = address[0], int(address[1])
+            except ValueError:
+                self.print_error("Invalid port!")
+                return
 
         device = Device(host=host, port=port)
 
         if device.connect():
+            device_id = self._next_id
+            self._next_id += 1
+
             self.devices.update({
-                len(self.devices): {
+                device_id: {
                     'host': host,
                     'port': str(port),
                     'device': device
@@ -95,9 +106,9 @@ class Console(Cmd):
             self.print_empty("")
 
             self.print_information(
-                f"Type %greendevices%end to list all connected devices.")
+                "Type %greendevices%end to list all connected devices.")
             self.print_information(
-                f"Type %greeninteract {str(len(self.devices) - 1)}%end "
+                f"Type %greeninteract {str(device_id)}%end "
                 "to interact this device."
             )
 
@@ -131,7 +142,11 @@ class Console(Cmd):
             self.print_usage("disconnect <id>")
             return
 
-        device_id = int(args[1])
+        try:
+            device_id = int(args[1])
+        except ValueError:
+            self.print_error("Invalid device ID!")
+            return
 
         if device_id not in self.devices:
             self.print_error("Invalid device ID!")
@@ -151,7 +166,11 @@ class Console(Cmd):
             self.print_usage("interact <id>")
             return
 
-        device_id = int(args[1])
+        try:
+            device_id = int(args[1])
+        except ValueError:
+            self.print_error("Invalid device ID!")
+            return
 
         if device_id not in self.devices:
             self.print_error("Invalid device ID!")

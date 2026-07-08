@@ -21,7 +21,9 @@ class ExternalCommand(Command):
         })
 
     def run(self, _):
+        """ Show current device activity information. """
+
         self.print_process("Getting activity information...")
 
         output = self.device.send_command("dumpsys activity")
-        self.print_empty(output)
+        self.print_empty(output or "")

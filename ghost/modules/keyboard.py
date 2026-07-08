@@ -3,6 +3,7 @@ This module requires Ghost: https://github.com/EntySec/Ghost
 Current source: https://github.com/EntySec/Ghost
 """
 
+import shlex
 import sys
 import termios
 import tty
@@ -26,6 +27,8 @@ class ExternalCommand(Command):
 
     @staticmethod
     def get_char():
+        """ Read a single character from stdin in raw mode. """
+
         fd = sys.stdin.fileno()
         old = termios.tcgetattr(fd)
         try:
@@ -35,9 +38,11 @@ class ExternalCommand(Command):
             termios.tcsetattr(fd, termios.TCSADRAIN, old)
 
     def run(self, _):
+        """ Forward keyboard input to the device as `input text` events. """
+
         self.print_process("Interacting with keyboard...")
         self.print_success("Interactive connection spawned!")
 
         self.print_information("Type text below.")
         while True:
-            self.device.send_command(f"input text {self.get_char()}")
+            self.device.send_command(f"input text {shlex.quote(self.get_char())}")

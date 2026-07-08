@@ -78,6 +78,8 @@ class ExternalCommand(Command):
         })
 
     def run(self, args):
+        """ Collect selected network information from the device. """
+
         outputs = []
 
         if args.arp:
@@ -112,4 +114,4 @@ class ExternalCommand(Command):
             outputs.append(
                 self.device.send_command('cat /proc/sys/net/ipv4/ip_forward'))
 
-        self.print_empty('\n'.join(outputs))
+        self.print_empty('\n'.join(o for o in outputs if o))

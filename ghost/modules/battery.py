@@ -21,7 +21,9 @@ class ExternalCommand(Command):
         })
 
     def run(self, _):
+        """ Show device battery information. """
+
         self.print_process("Getting battery information...")
 
         output = self.device.send_command("dumpsys battery")
-        self.print_empty(output)
+        self.print_empty(output or "")

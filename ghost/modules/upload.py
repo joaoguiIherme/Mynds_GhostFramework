@@ -3,8 +3,6 @@ This module requires Ghost: https://github.com/EntySec/Ghost
 Current source: https://github.com/EntySec/Ghost
 """
 
-import os
-
 from badges.cmd import Command
 
 
@@ -23,4 +21,6 @@ class ExternalCommand(Command):
         })
 
     def run(self, args):
+        """ Upload a local file to the device (device.upload reports status). """
+
         self.device.upload(args[1], args[2])

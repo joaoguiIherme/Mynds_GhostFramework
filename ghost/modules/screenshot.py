@@ -3,7 +3,7 @@ This module requires Ghost: https://github.com/EntySec/Ghost
 Current source: https://github.com/EntySec/Ghost
 """
 
-import os
+import uuid
 
 from badges.cmd import Command
 
@@ -23,8 +23,12 @@ class ExternalCommand(Command):
         })
 
     def run(self, args):
-        self.print_process(f"Taking screenshot...")
-        self.device.send_command("screencap /data/local/tmp/screenshot.png")
+        """ Capture a device screenshot and download it to a local path. """
 
-        self.device.download('/data/local/tmp/screenshot.png', args[1])
-        self.device.send_command("rm /data/local/tmp/screenshot.png")
+        remote_path = f"/data/local/tmp/screenshot_{uuid.uuid4().hex}.png"
+
+        self.print_process("Taking screenshot...")
+        self.device.send_command(f"screencap {remote_path}")
+
+        self.device.download(remote_path, args[1])
+        self.device.send_command(f"rm {remote_path}")

@@ -21,5 +21,7 @@ class ExternalCommand(Command):
         })
 
     def run(self, args):
+        """ Execute a raw shell command on the device and print its output. """
+
         output = self.device.send_command(' '.join(args[1:]))
-        self.print_empty(output)
+        self.print_empty(output or "")

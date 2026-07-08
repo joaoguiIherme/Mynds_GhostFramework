@@ -23,6 +23,8 @@ class ExternalCommand(Command):
         })
 
     def run(self, args):
+        """ List the contents of a remote directory in a table. """
+
         output = self.device.list(args[1])
 
         if output:
@@ -30,7 +32,10 @@ class ExternalCommand(Command):
             data = list()
 
             for entry in sorted(output):
-                timestamp = datetime.datetime.fromtimestamp(entry[3])
+                try:
+                    timestamp = str(datetime.datetime.fromtimestamp(entry[3]))
+                except (TypeError, ValueError, OSError, OverflowError):
+                    timestamp = '-'
                 data.append((entry[0].decode(), str(entry[1]), str(entry[2]), timestamp))
 
             self.print_table(f"Directory {args[1]}", headers, *data)
