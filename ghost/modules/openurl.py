@@ -3,6 +3,8 @@ This module requires Ghost: https://github.com/EntySec/Ghost
 Current source: https://github.com/EntySec/Ghost
 """
 
+import shlex
+
 from badges.cmd import Command
 
 
@@ -21,7 +23,10 @@ class ExternalCommand(Command):
         })
 
     def run(self, args):
-        if not args[1].startswith(("http://", "https://")):
-            args[1] = "http://" + args[1]
+        """ Open the given URL on the device via an ACTION_VIEW intent. """
 
-        self.device.send_command(f'am start -a android.intent.action.VIEW -d "{args[1]}"')
+        url = args[1] if args[1].startswith(("http://", "https://")) \
+            else "http://" + args[1]
+
+        self.device.send_command(
+            f"am start -a android.intent.action.VIEW -d {shlex.quote(url)}")

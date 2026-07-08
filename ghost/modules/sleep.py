@@ -21,4 +21,6 @@ class ExternalCommand(Command):
         })
 
     def run(self, _):
+        """ Put the device into sleep mode (power keyevent). """
+
         self.device.send_command("input keyevent 26")

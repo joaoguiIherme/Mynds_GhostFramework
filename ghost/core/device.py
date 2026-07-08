@@ -24,6 +24,8 @@ SOFTWARE.
 
 import os
 
+from typing import Optional
+
 from badges.cmd import Cmd
 
 from adb_shell.adb_device import AdbDeviceTcp
@@ -41,20 +43,22 @@ class Device(Cmd, FS):
     """
 
     def __init__(self, host: str, port: int = 5555, timeout: int = 10,
-                 key_filename: str = 'key') -> None:
+                 key_filename: Optional[str] = None) -> None:
         """ Initialize device.
 
         :param str host: device host
         :param int port: device port
         :param int timeout: connection timeout
-        :param str key_filename: name of the file containing key
+        :param Optional[str] key_filename: path of the file containing the key
+            (defaults to a restricted per-user location under ~/.ghost)
         :return None: None
         """
 
         self.host = host
         self.port = int(port)
 
-        self.key_file = key_filename
+        self.key_file = key_filename or os.path.join(
+            os.path.expanduser('~/.ghost'), 'key')
         self.device = AdbDeviceTcp(self.host, self.port, default_transport_timeout_s=timeout)
 
         super().__init__(
@@ -70,7 +74,16 @@ class Device(Cmd, FS):
         """
 
         if not os.path.exists(self.key_file):
+            key_dir = os.path.dirname(self.key_file)
+            if key_dir:
+                os.makedirs(key_dir, mode=0o700, exist_ok=True)
+
             keygen(self.key_file)
+
+            # Harden permissions: private key owner-only, public key world-readable.
+            os.chmod(self.key_file, 0o600)
+            if os.path.exists(self.key_file + '.pub'):
+                os.chmod(self.key_file + '.pub', 0o644)
 
         with open(self.key_file, 'r') as file:
             priv = file.read()
@@ -79,18 +92,19 @@ class Device(Cmd, FS):
             pub = file.read()
         return pub, priv
 
-    def send_command(self, command: str, output: bool = True) -> str:
+    def send_command(self, command: str, output: bool = True) -> Optional[str]:
         """ Send command to the device.
 
         :param str command: command to send to the device
         :param bool output: return command output or not
-        :return str: empty if output is False otherwise command output
+        :return Optional[str]: None on failure, empty string if output is False,
+            otherwise the command output
         """
 
         try:
             cmd_output = self.device.shell(command)
-        except Exception:
-            self.print_error("Socket is not connected!")
+        except Exception as e:
+            self.print_error(f"Socket is not connected! ({e})")
             return None
 
         if output:
@@ -107,8 +121,8 @@ class Device(Cmd, FS):
 
         try:
             return self.device.list(path)
-        except Exception:
-            self.print_error("Failed to list directory!")
+        except Exception as e:
+            self.print_error(f"Failed to list directory: {path}: {e}")
         return []
 
     def connect(self) -> bool:
@@ -128,8 +142,8 @@ class Device(Cmd, FS):
 
             return True
 
-        except Exception:
-            self.print_error(f"Failed to connect to {self.host}!")
+        except Exception as e:
+            self.print_error(f"Failed to connect to {self.host}: {e}")
 
         return False
 
@@ -164,8 +178,9 @@ class Device(Cmd, FS):
 
                 return True
 
-            except Exception:
-                self.print_error(f"Remote file: {input_file}: does not exist or a directory!")
+            except Exception as e:
+                self.print_error(
+                    f"Remote file: {input_file}: does not exist or a directory! ({e})")
 
         return False
 
@@ -177,23 +192,35 @@ class Device(Cmd, FS):
         :return bool: True if upload succeed
         """
 
-        if self.check_file(input_file):
+        # check_file() returns None on success and raises RuntimeError when the
+        # local file is missing or is a directory -- handle it explicitly.
+        try:
+            self.check_file(input_file)
+        except RuntimeError as e:
+            self.print_error(str(e))
+            return False
+
+        try:
+            self.print_process(f"Uploading {input_file}...")
+            self.device.push(input_file, output_path)
+
+            self.print_process(f"Saving to {output_path}...")
+            self.print_success(f"Saved to {output_path}!")
+
+            return True
+
+        except Exception as first_error:
+            # output_path may be a remote directory -- retry with the filename appended.
             try:
-                self.print_process(f"Uploading {input_file}...")
+                output_path = output_path + '/' + os.path.split(input_file)[1]
                 self.device.push(input_file, output_path)
 
-                self.print_process(f"Saving to {output_path}...")
                 self.print_success(f"Saved to {output_path}!")
-
                 return True
 
             except Exception:
-                try:
-                    output_path = output_path + '/' + os.path.split(input_file)[1]
-                    self.device.push(input_file, output_path)
-
-                except Exception:
-                    self.print_error(f"Remote directory: {output_path}: does not exist!")
+                self.print_error(
+                    f"Remote directory: {output_path}: does not exist! ({first_error})")
 
         return False
 

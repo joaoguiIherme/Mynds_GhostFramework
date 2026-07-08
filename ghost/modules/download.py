@@ -3,8 +3,6 @@ This module requires Ghost: https://github.com/EntySec/Ghost
 Current source: https://github.com/EntySec/Ghost
 """
 
-import os
-
 from badges.cmd import Command
 
 
@@ -23,4 +21,6 @@ class ExternalCommand(Command):
         })
 
     def run(self, args):
+        """ Download a remote file from the device to a local path. """
+
         self.device.download(args[1], args[2])
