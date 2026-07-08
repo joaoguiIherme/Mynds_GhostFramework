@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/badge/version-8.1.0-00ffee?style=flat-square">
+    <a href="https://github.com/joaoguiIherme/Mynds_GhostFramework/releases/tag/v8.1.0"><img src="https://img.shields.io/badge/version-8.1.0-00ffee?style=flat-square"></a>
     <img src="https://img.shields.io/badge/python-3.7+-ff2e97?style=flat-square">
     <img src="https://img.shields.io/badge/platform-linux-9d4edd?style=flat-square">
     <img src="https://img.shields.io/badge/license-MIT-00ffee?style=flat-square">
