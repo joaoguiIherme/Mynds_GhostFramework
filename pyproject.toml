@@ -21,13 +21,34 @@ dependencies = [
   "colorscript @ git+https://github.com/EntySec/ColorScript",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+  "pytest-cov>=4.0",
+]
+
 [project.scripts]
 ghost = "ghost.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["*"]
-exclude = []
+include = ["ghost*"]
+exclude = ["tests*"]
 
 [tool.setuptools]
 include-package-data = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "--cov=ghost --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["ghost"]
+omit = ["ghost/__main__.py", "ghost/cli.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.:",
+]
